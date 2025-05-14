@@ -48,31 +48,66 @@
   <body>
     <div>
       <button id="extractButton">Extrair JSON</button>
+      <button id="createFrameButton" disabled>
+        Criar Frame a partir do JSON
+      </button>
     </div>
     <div id="status"></div>
-    <div id="jsonData"></div>
+    <div id="json-container">
+      <pre id="jsonData"></pre>
+    </div>
 
     <script>
+      // Variável para armazenar os dados JSON
       let jsonData = null;
+
+      // Referências aos elementos da UI
       const statusEl = document.getElementById("status");
-      const jsonContainer = document.getElementById("jsonData");
+      const jsonContainer = document.getElementById("json-container");
+      const createFrameBtn = document.getElementById("createFrameButton");
 
       document.getElementById("extractButton").onclick = () => {
         statusEl.innerHTML = "<p>Extraindo dados de seleção...</p>";
         parent.postMessage({ pluginMessage: { type: "extract-frame" } }, "*");
       };
 
+      // Handler para o botão de criar frame
+      document.getElementById("createFrameButton").onclick = () => {
+        if (jsonData) {
+          statusEl.innerHTML = "<p>Criando frame a partir do JSON...</p>";
+          parent.postMessage(
+            { pluginMessage: { type: "create-frame", data: jsonData } },
+            "*"
+          );
+        } else {
+          statusEl.innerHTML =
+            "<p class='error'>Nenhum JSON disponível. Extraia dados primeiro.</p>";
+        }
+      };
+
+      // Adicione este código ao seu evento onmessage existente
       window.onmessage = (event) => {
         const message = event.data.pluginMessage;
 
         if (message.type === "frame-data") {
+          // Armazena os dados para uso posterior
           jsonData = message.data;
+
+          // Exibe o JSON
           const jsonStr = JSON.stringify(jsonData, null, 2);
           jsonContainer.innerHTML = `<pre>${jsonStr}</pre>`;
+
+          // Atualiza o status
           statusEl.innerHTML = `<p class='success'>${message.message}</p>`;
+
+          // Habilita o botão de criar frame
+          createFrameBtn.disabled = false;
+
+          console.log("JSON recebido:", jsonData); // Debug
         } else if (message.type === "error") {
-          statusEl.innerHTML = `<p class="message">${message.message}</p>`;
-          jsonContainer.innerHTML = "";
+          statusEl.innerHTML = `<p class='error'>${message.message}</p>`;
+        } else if (message.type === "success") {
+          statusEl.innerHTML = `<p class='success'>${message.message}</p>`;
         }
       };
     </script>
