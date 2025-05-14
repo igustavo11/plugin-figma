@@ -1,0 +1,80 @@
+<!-- ui.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualizador de JSON</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+      }
+
+      button {
+        background-color: #1e90ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        margin-right: 8px;
+        margin-bottom: 16px;
+      }
+
+      pre {
+        background: #f6f6f6;
+        padding: 12px;
+        overflow: auto;
+        font-size: 12px;
+        line-height: 1.4;
+        max-height: 450px;
+        white-space: pre-wrap;
+        border: 1px solid #ddd;
+      }
+
+      .message {
+        color: #e42b2b;
+      }
+
+      .success {
+        color: #2b8a3e;
+      }
+
+      #status {
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <button id="extractButton">Extrair JSON</button>
+    </div>
+    <div id="status"></div>
+    <div id="jsonData"></div>
+
+    <script>
+      let jsonData = null;
+      const statusEl = document.getElementById("status");
+      const jsonContainer = document.getElementById("jsonData");
+
+      document.getElementById("extractButton").onclick = () => {
+        statusEl.innerHTML = "<p>Extraindo dados de seleção...</p>";
+        parent.postMessage({ pluginMessage: { type: "extract-frame" } }, "*");
+      };
+
+      window.onmessage = (event) => {
+        const message = event.data.pluginMessage;
+
+        if (message.type === "frame-data") {
+          jsonData = message.data;
+          const jsonStr = JSON.stringify(jsonData, null, 2);
+          jsonContainer.innerHTML = `<pre>${jsonStr}</pre>`;
+          statusEl.innerHTML = `<p class='success'>${message.message}</p>`;
+        } else if (message.type === "error") {
+          statusEl.innerHTML = `<p class="message">${message.message}</p>`;
+          jsonContainer.innerHTML = "";
+        }
+      };
+    </script>
+  </body>
+</html>
